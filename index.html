@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Select | Hair Salon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --accent-color: #f5f5f4; /* グレージュ */
+            --text-color: #000000;
+            --text-secondary: #71717a;
+            --border-color: #e4e4e7;
+            --selected-bg: #000000;
+            --selected-text: #ffffff;
+            --font-main: 'Inter', 'Noto Sans JP', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding-bottom: 220px; /* 下部固定エリア用（拡張） */
+            min-height: 100vh;
+            font-weight: 400;
+        }
+
+        /* --- Header --- */
+        header {
+            padding: 60px 20px 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            margin-bottom: 0;
+        }
+
+        /* --- Menu Container --- */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .category-section {
+            margin-bottom: 60px;
+        }
+
+        .category-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            display: flex;
+            align-items: center;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .category-title::after {
+            content: "";
+            flex-grow: 1;
+            height: 1px;
+            background-color: var(--border-color);
+            margin-left: 20px;
+            opacity: 0.3;
+        }
+
+        .category-note {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            font-style: normal;
+            margin-bottom: 24px;
+            margin-top: -12px;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .menu-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* --- Menu Item --- */
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        .menu-item:hover {
+            border-color: var(--text-color);
+        }
+
+        .menu-item.selected {
+            background-color: var(--selected-bg);
+            border-color: var(--selected-bg);
+            color: var(--selected-text);
+        }
+
+        .menu-info {
+            flex-grow: 1;
+        }
+
+        .menu-name {
+            font-size: 1rem;
+            font-weight: 400;
+            margin-bottom: 4px;
+        }
+
+        .menu-price {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .menu-item.selected .menu-price {
+            opacity: 0.9;
+        }
+
+        /* --- Footer Fixed Area --- */
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--accent-color);
+            border-top: 1px solid var(--border-color);
+            padding: 24px 20px;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.05);
+            z-index: 100;
+        }
+
+        .footer-content {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Selected Items List in Footer */
+        .selected-list-container {
+            max-height: 80px;
+            overflow-y: auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .selected-tag {
+            display: inline-flex;
+            align-items: center;
+            background: var(--bg-color);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .remove-btn {
+            margin-left: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            line-height: 1;
+            color: var(--text-secondary);
+        }
+
+        .remove-btn:hover {
+            color: var(--text-color);
+        }
+
+        /* Empty state for selected list */
+        .empty-selection {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-style: normal;
+        }
+
+        /* --- Variable Price Input Section --- */
+        .variable-price-section {
+            display: none;
+            padding: 12px 0;
+            border-top: 1px solid var(--border-color);
+            margin-top: 12px;
+        }
+
+        .variable-price-section.show {
+            display: block;
+        }
+
+        .variable-price-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .variable-price-note {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            font-style: normal;
+        }
+
+        .variable-price-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .variable-price-input {
+            flex: 1;
+            max-width: 150px;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            font-size: 0.9rem;
+            font-family: var(--font-main);
+            font-weight: 400;
+        }
+
+        .variable-price-input:focus {
+            outline: none;
+            border-color: var(--text-color);
+        }
+
+        /* スピナー（上下矢印）を非表示 */
+        .variable-price-input::-webkit-outer-spin-button,
+        .variable-price-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .variable-price-input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        .variable-price-currency {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Summary Area */
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .total-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 4px;
+        }
+
+        .total-amount {
+            font-size: 2.4rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+        }
+
+        .total-amount span {
+            font-size: 1.2rem;
+            margin-left: 4px;
+        }
+
+        .reset-btn {
+            background: none;
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            padding: 10px 24px;
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 2px;
+            height: fit-content;
+        }
+
+        .reset-btn:hover {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+        }
+
+        /* --- Scrollbar --- */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Menu</h1>
+    </header>
+
+    <div class="container" id="menu-container">
+        <!-- Categories and Items will be injected here -->
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div id="selected-items-list" class="selected-list-container">
+                <div class="empty-selection">メニューを選択してください</div>
+            </div>
+
+            <!-- Variable Price Input Section -->
+            <div id="variable-price-section" class="variable-price-section">
+                <label class="variable-price-label" id="variable-price-label">ハイライト - 税抜価格を入力してください</label>
+                <div class="variable-price-input-group">
+                    <input type="number" id="variable-price-input" class="variable-price-input" min="0" value="6000" />
+                    <span class="variable-price-currency">円（税抜）</span>
+                </div>
+                <div class="variable-price-note" id="variable-price-note">税込価格：¥6,600</div>
+            </div>
+            
+            <div class="summary-row">
+                <div>
+                    <div class="total-label">Total</div>
+                    <div class="total-amount" id="total-price">0<span>円</span></div>
+                </div>
+                <button class="reset-btn" id="reset-button">RESET</button>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        /**
+         * メニューデータ
+         * カテゴリ、表示名、表示価格、計算用価格を管理します。
+         * 変動価格メニュー（「〜」付き）は isVariable: true を設定し、minPrice を指定してください。
+         * メニューを編集する場合は、以下の配列を変更してください。
+         */
+        const menuData = [
+            {
+                category: "カット",
+                note: null,
+                items: [
+                    { id: "c1", name: "カット", displayPrice: "7,700", price: 7700, isVariable: false },
+                    { id: "c2", name: "高校・大学生カット", displayPrice: "5,500", price: 5500, isVariable: false },
+                    { id: "c3", name: "小学生・中学生カット", displayPrice: "4,400", price: 4400, isVariable: false },
+                    { id: "c4", name: "Jr.カット", displayPrice: "3,300", price: 3300, isVariable: false },
+                    { id: "c5", name: "バングカット", displayPrice: "1,100", price: 1100, isVariable: false },
+                    { id: "c6", name: "顔周りカット", displayPrice: "2,200", price: 2200, isVariable: false },
+                    { id: "c7", name: "刈上げメンテナンスカット", displayPrice: "3,300", price: 3300, isVariable: false },
+                ]
+            },
+            {
+                category: "カラー",
+                note: "※（S）表記メニューはレングス追加料金対象",
+                items: [
+                    { id: "cl1", name: "カラー（S）", displayPrice: "8,800", price: 8800, isVariable: false },
+                    { id: "cl2", name: "イルミナ・オーガニックカラー（S）", displayPrice: "9,900", price: 9900, isVariable: false },
+                    { id: "cl3", name: "2ヶ月以内グレイカラーリタッチ", displayPrice: "7,700", price: 7700, isVariable: false },
+                    { id: "cl4", name: "イルミナ・オーガニックカラーリタッチ", displayPrice: "8,800", price: 8800, isVariable: false },
+                    { id: "cl5", name: "ブリーチ on カラー　Wカラー（S）", displayPrice: "20,900", price: 20900, isVariable: false },
+                    { id: "cl6", name: "ハイライト", displayPrice: "6,600〜", price: 6600, isVariable: true, minPrice: 6600 },
+                    { id: "cl7", name: "ハイブリーチ（S）", displayPrice: "11,000", price: 11000, isVariable: false },
+                ]
+            },
+            {
+                category: "パーマ",
+                note: null,
+                items: [
+                    { id: "p1", name: "カット＋パーマ", displayPrice: "16,500", price: 16500, isVariable: false },
+                    { id: "p2", name: "ポイントパーマ", displayPrice: "4,950", price: 4950, isVariable: false },
+                    { id: "p3", name: "カット＋デジタルパーマ", displayPrice: "22,000", price: 22000, isVariable: false },
+                ]
+            },
+            {
+                category: "ストレート",
+                note: "※（S）表記メニューはレングス追加料金対象",
+                items: [
+                    { id: "st1", name: "カット＋酸性ストレート（S）", displayPrice: "27,500", price: 27500, isVariable: false },
+                    { id: "st2", name: "カット＋ストレート（S）", displayPrice: "22,000", price: 22000, isVariable: false },
+                    { id: "st3", name: "ポイントストレート（S）", displayPrice: "8,800", price: 8800, isVariable: false },
+                    { id: "st4", name: "カット＋ストカール（S）", displayPrice: "33,000", price: 33000, isVariable: false },
+                ]
+            },
+            {
+                category: "髪質改善",
+                note: null,
+                items: [
+                    { id: "k1", name: "髪ドラ髪質改善ストレート単品", displayPrice: "30,800", price: 30800, isVariable: false },
+                    { id: "k2", name: "髪ドラ髪質改善ストレート＋カット", displayPrice: "36,300", price: 36300, isVariable: false },
+                    { id: "k3", name: "髪ドラ微還元髪質改善トリートメント", displayPrice: "14,300", price: 14300, isVariable: false },
+                    { id: "k4", name: "髪ドラ酸熱髪質改善トリートメント", displayPrice: "12,100", price: 12100, isVariable: false },
+                    { id: "k5", name: "つるりんちょ。ZERO髪質改善カラー", displayPrice: "5,500", price: 5500, isVariable: false },
+                ]
+            },
+            {
+                category: "トリートメント",
+                note: null,
+                items: [
+                    { id: "t1", name: "マイクロバブル", displayPrice: "2,200", price: 2200, isVariable: false },
+                    { id: "t2", name: "クイックトリートメント", displayPrice: "3,300", price: 3300, isVariable: false },
+                    { id: "t3", name: "Aujua", displayPrice: "5,500", price: 5500, isVariable: false },
+                    { id: "t4", name: "Aujuaプレミアム", displayPrice: "11,000", price: 11000, isVariable: false },
+                    { id: "t5", name: "TOKIO", displayPrice: "8,800", price: 8800, isVariable: false },
+                    { id: "t6", name: "クイックヘッドスパ", displayPrice: "3,300", price: 3300, isVariable: false },
+                ]
+            },
+            {
+                category: "シャンプー・ブロー",
+                note: null,
+                items: [
+                    { id: "s1", name: "シャンプー＋ブロー", displayPrice: "2,200", price: 2200, isVariable: false },
+                    { id: "s2", name: "シャンプー＋ブローのみ", displayPrice: "4,400", price: 4400, isVariable: false },
+                    { id: "s3", name: "SET", displayPrice: "5,500", price: 5500, isVariable: false },
+                ]
+            },
+            {
+                category: "レングス追加料金",
+                note: null,
+                items: [
+                    { id: "l1", name: "ミディアム", displayPrice: "550", price: 550, isVariable: false },
+                    { id: "l2", name: "ロング", displayPrice: "1,100", price: 1100, isVariable: false },
+                    { id: "l3", name: "スーパーロング", displayPrice: "2,200", price: 2200, isVariable: false },
+                ]
+            }
+        ];
+
+        // 状態管理
+        let selectedIds = new Set();
+        let variablePrices = {}; // 変動価格メニューの実際の金額を保持
+        let selectedVariableItem = null; // 現在選択されている変動価格メニュー
+
+        // DOM要素
+        const menuContainer = document.getElementById('menu-container');
+        const selectedItemsList = document.getElementById('selected-items-list');
+        const totalPriceDisplay = document.getElementById('total-price');
+        const resetButton = document.getElementById('reset-button');
+        const variablePriceSection = document.getElementById('variable-price-section');
+        const variablePriceInput = document.getElementById('variable-price-input');
+        const variablePriceLabel = document.getElementById('variable-price-label');
+
+        // メニューの描画
+        function renderMenu() {
+            menuContainer.innerHTML = '';
+            menuData.forEach(cat => {
+                const section = document.createElement('div');
+                section.className = 'category-section';
+                
+                const title = document.createElement('h2');
+                title.className = 'category-title';
+                title.textContent = cat.category;
+                section.appendChild(title);
+
+                if (cat.note) {
+                    const note = document.createElement('div');
+                    note.className = 'category-note';
+                    note.textContent = cat.note;
+                    section.appendChild(note);
+                }
+
+                const grid = document.createElement('div');
+                grid.className = 'menu-grid';
+
+                cat.items.forEach(item => {
+                    const itemEl = document.createElement('div');
+                    itemEl.className = `menu-item ${selectedIds.has(item.id) ? 'selected' : ''}`;
+                    itemEl.dataset.id = item.id;
+                    itemEl.innerHTML = `
+                        <div class="menu-info">
+                            <div class="menu-name">${item.name}</div>
+                            <div class="menu-price">¥${item.displayPrice}</div>
+                        </div>
+                    `;
+                    itemEl.addEventListener('click', () => toggleSelection(item.id, item));
+                    grid.appendChild(itemEl);
+                });
+
+                section.appendChild(grid);
+                menuContainer.appendChild(section);
+            });
+        }
+
+        // 選択の切り替え
+        function toggleSelection(id, item) {
+            if (selectedIds.has(id)) {
+                selectedIds.delete(id);
+                if (item.isVariable) {
+                    delete variablePrices[id];
+                    selectedVariableItem = null;
+                    hideVariablePriceInput();
+                }
+            } else {
+                selectedIds.add(id);
+                if (item.isVariable) {
+                    // 初期値：minPriceは税込価格（100円単位で調整済み）
+                    // 逆算して税抜価格を求める
+                    const initialPriceExcludingTax = Math.round(item.minPrice / 1.1);
+                    variablePrices[id] = item.minPrice;
+                    selectedVariableItem = item;
+                    showVariablePriceInput(item);
+                }
+            }
+            updateUI();
+        }
+
+        // 変動価格入力欄を表示
+        function showVariablePriceInput(item) {
+            const minPriceExcludingTax = Math.round(item.minPrice / 1.1);
+            variablePriceLabel.textContent = `${item.name} - 税抜価格を入力してください`;
+            variablePriceInput.value = minPriceExcludingTax;
+            variablePriceInput.min = 0;
+            updateVariablePriceDisplay(minPriceExcludingTax);
+            variablePriceSection.classList.add('show');
+            variablePriceInput.focus();
+        }
+
+        // 価格を100円単位で四捨五入
+        function roundToNearestHundred(price) {
+            return Math.round(price / 100) * 100;
+        }
+
+        // 変動価格の表示を更新（税込価格を表示）
+        function updateVariablePriceDisplay(priceExcludingTax) {
+            const priceIncludingTax = roundToNearestHundred(priceExcludingTax * 1.1);
+            const note = document.getElementById('variable-price-note');
+            note.textContent = `税込価格：¥${priceIncludingTax.toLocaleString()}`;
+        }
+
+        // 変動価格入力欄を非表示
+        function hideVariablePriceInput() {
+            variablePriceSection.classList.remove('show');
+        }
+
+        // 変動価格の入力イベント
+        variablePriceInput.addEventListener('input', () => {
+            if (selectedVariableItem) {
+                const priceExcludingTax = parseInt(variablePriceInput.value, 10);
+                updateVariablePriceDisplay(isNaN(priceExcludingTax) ? 0 : priceExcludingTax);
+                updateVariablePrice(selectedVariableItem.id, priceExcludingTax);
+            }
+        });
+
+        variablePriceInput.addEventListener('change', () => {
+            if (selectedVariableItem) {
+                const priceExcludingTax = parseInt(variablePriceInput.value, 10);
+                updateVariablePrice(selectedVariableItem.id, priceExcludingTax);
+            }
+        });
+
+        // 変動価格の更新（税抜入力を税込に変換）
+        function updateVariablePrice(id, priceExcludingTax) {
+            let price = parseInt(priceExcludingTax, 10);
+            if (isNaN(price) || price <= 0) {
+                price = 0;
+            }
+            // 税抜価格に10%の消費税を加算し、100円単位で四捨五入
+            const priceIncludingTax = roundToNearestHundred(price * 1.1);
+            variablePrices[id] = priceIncludingTax;
+            updateUI();
+        }
+
+        // UI全体の更新
+        function updateUI() {
+            // メニューアイテムの表示更新
+            document.querySelectorAll('.menu-item').forEach(el => {
+                if (selectedIds.has(el.dataset.id)) {
+                    el.classList.add('selected');
+                } else {
+                    el.classList.remove('selected');
+                }
+            });
+
+            // 下部リストの更新
+            renderSelectedList();
+
+            // 合計金額の計算
+            updateTotal();
+        }
+
+        // 選択中メニューリストの描画
+        function renderSelectedList() {
+            if (selectedIds.size === 0) {
+                selectedItemsList.innerHTML = '<div class="empty-selection">メニューを選択してください</div>';
+                return;
+            }
+
+            selectedItemsList.innerHTML = '';
+            const allItems = menuData.flatMap(cat => cat.items);
+            
+            selectedIds.forEach(id => {
+                const item = allItems.find(i => i.id === id);
+                if (item) {
+                    let displayName = item.name;
+                    if (item.isVariable && variablePrices[id]) {
+                        // 変動価格メニューは税込価格を表示
+                        displayName += `（¥${variablePrices[id].toLocaleString()}）`;
+                    }
+                    
+                    const tag = document.createElement('div');
+                    tag.className = 'selected-tag';
+                    tag.innerHTML = `
+                        ${displayName}
+                        <span class="remove-btn" onclick="event.stopPropagation(); removeById('${item.id}')">&times;</span>
+                    `;
+                    selectedItemsList.appendChild(tag);
+                }
+            });
+        }
+
+        // ID指定で削除（下部リスト用）
+        window.removeById = function(id) {
+            const allItems = menuData.flatMap(cat => cat.items);
+            const item = allItems.find(i => i.id === id);
+            
+            selectedIds.delete(id);
+            if (item && item.isVariable) {
+                delete variablePrices[id];
+                selectedVariableItem = null;
+                hideVariablePriceInput();
+            }
+            updateUI();
+        };
+
+        // 合計金額の更新
+        function updateTotal() {
+            const allItems = menuData.flatMap(cat => cat.items);
+            let total = 0;
+            selectedIds.forEach(id => {
+                const item = allItems.find(i => i.id === id);
+                if (item) {
+                    if (item.isVariable) {
+                        total += variablePrices[id] || item.minPrice;
+                    } else {
+                        total += item.price;
+                    }
+                }
+            });
+            totalPriceDisplay.innerHTML = `${total.toLocaleString()}<span>円</span>`;
+        }
+
+        // リセット
+        resetButton.addEventListener('click', () => {
+            selectedIds.clear();
+            variablePrices = {};
+            selectedVariableItem = null;
+            hideVariablePriceInput();
+            updateUI();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // 初期描画
+        renderMenu();
+    </script>
+</body>
+</html>
