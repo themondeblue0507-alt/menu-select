@@ -139,6 +139,11 @@
             opacity: 0.8;
         }
 
+        .menu-price.discount {
+            color: #dc2626;
+            font-weight: 600;
+        }
+
         .menu-item.selected .menu-price {
             opacity: 0.9;
         }
@@ -181,6 +186,11 @@
             border-radius: 20px;
             font-size: 0.75rem;
             border: 1px solid var(--border-color);
+        }
+
+        .selected-tag .discount-price {
+            color: #dc2626;
+            font-weight: 600;
         }
 
         .remove-btn {
@@ -454,6 +464,14 @@
                     { id: "l2", name: "ロング", displayPrice: "1,100", price: 1100, isVariable: false },
                     { id: "l3", name: "スーパーロング", displayPrice: "2,200", price: 2200, isVariable: false },
                 ]
+            },
+            {
+                category: "HPB限定クーポン",
+                note: "※カットを含む税込¥5,500以上の施術対象\n（ポイントカット・学割・Jr.カットは適用外）",
+                items: [
+                    { id: "hpb1", name: "HPB新規", displayPrice: "-¥2,200", price: -2200, isVariable: false, isDiscount: true },
+                    { id: "hpb2", name: "HPB再来", displayPrice: "-¥550", price: -550, isVariable: false, isDiscount: true },
+                ]
             }
         ];
 
@@ -497,10 +515,11 @@
                     const itemEl = document.createElement('div');
                     itemEl.className = `menu-item ${selectedIds.has(item.id) ? 'selected' : ''}`;
                     itemEl.dataset.id = item.id;
+                    const priceClass = item.isDiscount ? 'discount' : '';
                     itemEl.innerHTML = `
                         <div class="menu-info">
                             <div class="menu-name">${item.name}</div>
-                            <div class="menu-price">¥${item.displayPrice}</div>
+                            <div class="menu-price ${priceClass}">${item.isDiscount ? item.displayPrice : '¥' + item.displayPrice}</div>
                         </div>
                     `;
                     itemEl.addEventListener('click', () => toggleSelection(item.id, item));
@@ -626,12 +645,16 @@
                     if (item.isVariable && variablePrices[id]) {
                         // 変動価格メニューは税込価格を表示
                         displayName += `（¥${variablePrices[id].toLocaleString()}）`;
+                    } else if (item.isDiscount) {
+                        // 割引メニューは割引金額を表示
+                        displayName += ` ${item.displayPrice}`;
                     }
                     
                     const tag = document.createElement('div');
                     tag.className = 'selected-tag';
+                    const priceClass = item.isDiscount ? 'discount-price' : '';
                     tag.innerHTML = `
-                        ${displayName}
+                        <span class="${priceClass}">${displayName}</span>
                         <span class="remove-btn" onclick="event.stopPropagation(); removeById('${item.id}')">&times;</span>
                     `;
                     selectedItemsList.appendChild(tag);
@@ -662,11 +685,16 @@
                 if (item) {
                     if (item.isVariable) {
                         total += variablePrices[id] || item.minPrice;
+                    } else if (item.isDiscount) {
+                        // 割引メニューは負の金額を加算（つまり引く）
+                        total += item.price;
                     } else {
                         total += item.price;
                     }
                 }
             });
+            // 合計金額が0未満にならないようにする
+            total = Math.max(0, total);
             totalPriceDisplay.innerHTML = `${total.toLocaleString()}<span>円</span>`;
         }
 
