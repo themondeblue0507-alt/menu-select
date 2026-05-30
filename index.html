@@ -355,8 +355,8 @@
             <div id="variable-price-section" class="variable-price-section">
                 <label class="variable-price-label" id="variable-price-label">ハイライト - 税抜価格を入力してください</label>
                 <div class="variable-price-input-group">
-                    <input type="number" id="variable-price-input" class="variable-price-input" min="0" value="6000" />
-                    <span class="variable-price-currency">円（税抜）</span>
+                    <input type="number" id="variable-price-input" class="variable-price-input" min="0" />
+                    <span class="variable-price-currency" id="variable-price-currency-label">円（税抜）</span>
                 </div>
                 <div class="variable-price-note" id="variable-price-note">税込価格：¥6,600</div>
             </div>
@@ -563,8 +563,9 @@
             if (item.id === 'disc6') {
                 // HPBポイント利用の場合
                 variablePriceLabel.textContent = `${item.name} - 金額を入力してください`;
-                variablePriceInput.value = 0;
+                variablePriceInput.value = '';
                 variablePriceInput.min = 0;
+                document.getElementById('variable-price-currency-label').textContent = '円';
                 updateVariablePriceDisplay(0, true);
             } else {
                 // その他の変動価格メニューの場合
@@ -572,6 +573,7 @@
                 variablePriceLabel.textContent = `${item.name} - 税抜価格を入力してください`;
                 variablePriceInput.value = minPriceExcludingTax;
                 variablePriceInput.min = 0;
+                document.getElementById('variable-price-currency-label').textContent = '円（税抜）';
                 updateVariablePriceDisplay(minPriceExcludingTax);
             }
             variablePriceSection.classList.add('show');
@@ -604,15 +606,35 @@
         // 変動価格の入力イベント
         variablePriceInput.addEventListener('input', () => {
             if (selectedVariableItem) {
-                const priceExcludingTax = parseInt(variablePriceInput.value, 10);
-                updateVariablePriceDisplay(isNaN(priceExcludingTax) ? 0 : priceExcludingTax);
+                // 入力値を取得し、空文字値をチェック
+                let inputValue = variablePriceInput.value.trim();
+                
+                // 空文字値の場合、1文字以上入力された場合、整数値を取得
+                let priceExcludingTax = 0;
+                if (inputValue !== '') {
+                    priceExcludingTax = parseInt(inputValue, 10);
+                    // NaN、負の値、整数以外の値をチェック
+                    if (isNaN(priceExcludingTax) || priceExcludingTax < 0) {
+                        priceExcludingTax = 0;
+                    }
+                }
+                
+                updateVariablePriceDisplay(priceExcludingTax, selectedVariableItem.id === 'disc6');
                 updateVariablePrice(selectedVariableItem.id, priceExcludingTax);
             }
         });
 
         variablePriceInput.addEventListener('change', () => {
             if (selectedVariableItem) {
-                const priceExcludingTax = parseInt(variablePriceInput.value, 10);
+                // 変更時も同様にバリデーションを実施
+                let inputValue = variablePriceInput.value.trim();
+                let priceExcludingTax = 0;
+                if (inputValue !== '') {
+                    priceExcludingTax = parseInt(inputValue, 10);
+                    if (isNaN(priceExcludingTax) || priceExcludingTax < 0) {
+                        priceExcludingTax = 0;
+                    }
+                }
                 updateVariablePrice(selectedVariableItem.id, priceExcludingTax);
             }
         });
