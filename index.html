@@ -466,11 +466,15 @@
                 ]
             },
             {
-                category: "HPB限定クーポン",
-                note: "※カットを含む税込¥5,500以上の施術対象\n（ポイントカット・学割・Jr.カットは適用外）",
+                category: "各種割引",
+                note: null,
                 items: [
-                    { id: "hpb1", name: "HPB新規", displayPrice: "-¥2,200", price: -2200, isVariable: false, isDiscount: true },
-                    { id: "hpb2", name: "HPB再来", displayPrice: "-¥550", price: -550, isVariable: false, isDiscount: true },
+                    { id: "disc1", name: "会員割引", displayPrice: "-¥550", price: -550, isVariable: false, isDiscount: true },
+                    { id: "disc2", name: "45日以内来店割引", displayPrice: "-¥550", price: -550, isVariable: false, isDiscount: true },
+                    { id: "disc3", name: "シニア70以上割引", displayPrice: "-¥550", price: -550, isVariable: false, isDiscount: true },
+                    { id: "disc4", name: "マイクロバブルセット割引", displayPrice: "-¥550", price: -550, isVariable: false, isDiscount: true },
+                    { id: "disc5", name: "カット無し", displayPrice: "-¥2,200", price: -2200, isVariable: false, isDiscount: true },
+                    { id: "disc6", name: "HPBポイント利用", displayPrice: "-¥0", price: 0, isVariable: true, isDiscount: true, minPrice: 0 },
                 ]
             }
         ];
@@ -556,11 +560,20 @@
 
         // 変動価格入力欄を表示
         function showVariablePriceInput(item) {
-            const minPriceExcludingTax = Math.round(item.minPrice / 1.1);
-            variablePriceLabel.textContent = `${item.name} - 税抜価格を入力してください`;
-            variablePriceInput.value = minPriceExcludingTax;
-            variablePriceInput.min = 0;
-            updateVariablePriceDisplay(minPriceExcludingTax);
+            if (item.id === 'disc6') {
+                // HPBポイント利用の場合
+                variablePriceLabel.textContent = `${item.name} - 金額を入力してください`;
+                variablePriceInput.value = 0;
+                variablePriceInput.min = 0;
+                updateVariablePriceDisplay(0, true);
+            } else {
+                // その他の変動価格メニューの場合
+                const minPriceExcludingTax = Math.round(item.minPrice / 1.1);
+                variablePriceLabel.textContent = `${item.name} - 税抜価格を入力してください`;
+                variablePriceInput.value = minPriceExcludingTax;
+                variablePriceInput.min = 0;
+                updateVariablePriceDisplay(minPriceExcludingTax);
+            }
             variablePriceSection.classList.add('show');
             variablePriceInput.focus();
         }
@@ -571,10 +584,16 @@
         }
 
         // 変動価格の表示を更新（税込価格を表示）
-        function updateVariablePriceDisplay(priceExcludingTax) {
-            const priceIncludingTax = roundToNearestHundred(priceExcludingTax * 1.1);
+        function updateVariablePriceDisplay(priceExcludingTax, isPointDiscount = false) {
             const note = document.getElementById('variable-price-note');
-            note.textContent = `税込価格：¥${priceIncludingTax.toLocaleString()}`;
+            if (isPointDiscount) {
+                // HPBポイント利用の場合、入力値をそのまま表示
+                note.textContent = `割引金額：¥${priceExcludingTax.toLocaleString()}`;
+            } else {
+                // その他の変動価格メニューの場合、税抜価格から税込価格を計算
+                const priceIncludingTax = roundToNearestHundred(priceExcludingTax * 1.1);
+                note.textContent = `税込価格：¥${priceIncludingTax.toLocaleString()}`;
+            }
         }
 
         // 変動価格入力欄を非表示
@@ -604,9 +623,19 @@
             if (isNaN(price) || price <= 0) {
                 price = 0;
             }
-            // 税抜価格に10%の消費税を加算し、100円単位で四捨五入
-            const priceIncludingTax = roundToNearestHundred(price * 1.1);
-            variablePrices[id] = priceIncludingTax;
+            
+            const allItems = menuData.flatMap(cat => cat.items);
+            const item = allItems.find(i => i.id === id);
+            
+            if (item && item.id === 'disc6') {
+                // HPBポイント利用の場合、入力値をそのまま使用（割引だから負の値）
+                variablePrices[id] = -price;
+                updateVariablePriceDisplay(price, true);
+            } else {
+                // その他の変動価格メニューの場合、税抜価格から税込価格を計算
+                const priceIncludingTax = roundToNearestHundred(price * 1.1);
+                variablePrices[id] = priceIncludingTax;
+            }
             updateUI();
         }
 
@@ -643,8 +672,13 @@
                 if (item) {
                     let displayName = item.name;
                     if (item.isVariable && variablePrices[id]) {
-                        // 変動価格メニューは税込価格を表示
-                        displayName += `（¥${variablePrices[id].toLocaleString()}）`;
+                        if (item.id === 'disc6') {
+                            // HPBポイント利用の場合、割引金額を表示
+                            displayName += ` -¥${Math.abs(variablePrices[id]).toLocaleString()}`;
+                        } else {
+                            // その他の変動価格メニューは税込価格を表示
+                            displayName += `（¥${variablePrices[id].toLocaleString()}）`;
+                        }
                     } else if (item.isDiscount) {
                         // 割引メニューは割引金額を表示
                         displayName += ` ${item.displayPrice}`;
